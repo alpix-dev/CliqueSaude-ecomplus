@@ -176,15 +176,13 @@ const app = {
             },
             working_open: {
               type: 'string',
-              maxLength:3,
-              pattern: '^[A-Za-z0-9-_.]+$',
+              maxLength:5,
               title: 'Horário de Abertura dos Agendamentos',
               description: 'Exemplo: 7:30'
             },
             working_close: {
               type: 'string',
-              maxLength:3,
-              pattern: '^[A-Za-z0-9-_.]+$',
+              maxLength:5,
               title: 'Horário de Encerramento dos Agendamentos',
               description: 'Exemplo: 18:00'
             },
