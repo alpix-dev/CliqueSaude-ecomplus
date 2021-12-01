@@ -46,88 +46,52 @@
       },
       "hide": false
     },
-    "jadlog_contract": {
-      "schema": {
-        "title": "Contrato",
-        "description": "Informações do contrato com a Jadlog (solicite ao suporte comercial da Jadlog)",
-        "type": "object",
-        "required": [
-          "account",
-          "token"
-        ],
-        "properties": {
-          "account": {
-            "type": "string",
-            "maxLength": 50,
-            "title": "Número da conta"
-          },
-          "token": {
-            "type": "string",
-            "maxLength": 250,
-            "title": "Token"
-          },
-          "contract": {
-            "type": "string",
-            "maxLength": 50,
-            "title": "Contrato"
-          },
-          "doc_number": {
-            "type": "string",
-            "maxLength": 14,
-            "title": "CNPJ do contratante",
-            "description": "Usado para vincular tabela de frete especial (apenas números)"
-          },
-          "insurance_type": {
-            "type": "string",
-            "enum": [
-              "Normal",
-              "Apólice própria"
-            ],
-            "default": "Apólice própria",
-            "title": "Tipo de seguro"
-          },
-          "collection_cost": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 999999,
-            "title": "Valor da coleta"
-          }
-        }
-      },
-      "hide": true
-    },
     "services": {
       "schema": {
-        "title": "Modalidades de envio via Jadlog",
+        "title": "Modalidades de envio com agendamento",
         "type": "array",
-        "maxItems": 4,
+        "maxItems": 99,
         "items": {
           "title": "Opção de serviço de entrega",
           "type": "object",
           "required": [
-            "service_code"
+            "service_code",
+            "working_open",
+            "working_close"
           ],
           "properties": {
             "label": {
               "type": "string",
               "maxLength": 50,
               "title": "Rótulo",
-              "description": "Nome do serviço exibido aos clientes"
+              "description": "Nome do serviço/modalidade exibido aos clientes"
             },
             "service_code": {
               "type": "string",
-              "enum": [
-                ".PACKAGE",
-                "RODOVIÁRIO",
-                "DOC",
-                "ECONÔMICO",
-                "CORPORATE",
-                ".COM",
-                "CARGO",
-                "EMERGENCIAL",
-                "EXPRESSO"
-              ],
-              "title": "Modalidade de envio"
+              "maxLength": 3,
+              "pattern": "^[A-Za-z0-9-_.]+$",
+              "title": "Código do Serviço"
+            },
+            "working_open": {
+              "type": "string",
+              "maxLength": 3,
+              "pattern": "^[A-Za-z0-9-_.]+$",
+              "title": "Horário de Abertura dos Agendamentos",
+              "description": "Exemplo: 7:30"
+            },
+            "working_close": {
+              "type": "string",
+              "maxLength": 3,
+              "pattern": "^[A-Za-z0-9-_.]+$",
+              "title": "Horário de Encerramento dos Agendamentos",
+              "description": "Exemplo: 18:00"
+            },
+            "interval": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 99999,
+              "title": "Intervalo entre agendamentos",
+              "description": "Informar intervalo em minutos entre os agendamentos"
             }
           }
         }
@@ -174,18 +138,9 @@
       },
       "hide": false
     },
-    "free_no_weight_shipping": {
-      "schema": {
-        "type": "boolean",
-        "default": false,
-        "title": "Frete grátis sem peso",
-        "description": "Aplica frete grátis se todos os produtos tiverem peso e dimensões zeradas"
-      },
-      "hide": false
-    },
     "shipping_rules": {
       "schema": {
-        "title": "Regras de envio",
+        "title": "Regras de envio/agendamento/coleta",
         "description": "Aplicar descontos/adicionais condicionados",
         "type": "array",
         "maxItems": 300,
@@ -196,19 +151,9 @@
           "properties": {
             "service_code": {
               "type": "string",
-              "enum": [
-                ".PACKAGE",
-                "RODOVIÁRIO",
-                "DOC",
-                "ECONÔMICO",
-                "CORPORATE",
-                ".COM",
-                "CARGO",
-                "EMERGENCIAL",
-                "EXPRESSO"
-              ],
-              "default": ".PACKAGE",
-              "title": "Modalidade de envio"
+              "maxLength": 3,
+              "pattern": "^[A-Za-z0-9-_.]+$",
+              "title": "Código do Serviço"
             },
             "zip_range": {
               "title": "Faixa de CEP",
@@ -220,13 +165,13 @@
               "properties": {
                 "min": {
                   "type": "integer",
-                  "minimum": 10000,
+                  "minimum": 0,
                   "maximum": 999999999,
                   "title": "CEP inicial"
                 },
                 "max": {
                   "type": "integer",
-                  "minimum": 10000,
+                  "minimum": 0,
                   "maximum": 999999999,
                   "title": "CEP final"
                 }
