@@ -138,208 +138,239 @@ const app = {
   },
 
   admin_settings: {
-      zip: {
-          schema: {
-              type: "string",
-              maxLength: 9,
-              pattern: "^[0-9]{5}-?[0-9]{3}$",
-              title: "CEP de origem",
-              description: "Código postal do remetente ou centro de distribuição"
-          },
-          hide: true
+    zip: {
+      schema: {
+        type: 'string',
+        maxLength: 9,
+        pattern: '^[0-9]{5}-?[0-9]{3}$',
+        title: 'CEP de origem',
+        description: 'Código postal do remetente para cálculo do frete'
       },
-      services: {
-          schema: {
-              title: "Serviços de entrega personalizados",
-              type: "array",
-              maxItems: 50,
-              items: {
-                  title: "Opção de serviço de entrega",
-                  type: "object",
-                  required: [
-                      service_code
-                  ],
-                  properties: {
-                      label: {
-                          type: "string",
-                          maxLength: 50,
-                          title: "Rótulo",
-                          description: "Nome do serviço exibido aos clientes"
-                      },
-                      carrier: {
-                          type: "string",
-                          maxLength: 200,
-                          title: "Transportadora"
-                      },
-                      service_code: {
-                          type: "string",
-                          maxLength: 10,
-                          pattern: "^[A-Za-z0-9-_.]+$",
-                          title: "Código do serviço"
-                      }
-                  }
-              }
+      hide: false
+    },
+    jadlog_contract: {
+      schema: {
+        title: 'Contrato',
+        description: 'Informações do contrato com a Jadlog (solicite ao suporte comercial da Jadlog)',
+        type: 'object',
+        required: [
+          'account',
+          'token'
+        ],
+        properties: {
+          account: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Número da conta'
           },
-          hide: true
+          token: {
+            type: 'string',
+            maxLength: 250,
+            title: 'Token'
+          },
+          contract: {
+            type: 'string',
+            maxLength: 50,
+            title: 'Contrato'
+          },
+          doc_number: {
+            type: 'string',
+            maxLength: 14,
+            title: 'CNPJ do contratante',
+            description: 'Usado para vincular tabela de frete especial (apenas números)'
+          },
+          insurance_type: {
+            type: 'string',
+            enum: [
+              'Normal',
+              'Apólice própria'
+            ],
+            default: 'Apólice própria',
+            title: 'Tipo de seguro'
+          },
+          collection_cost: {
+            type: 'number',
+            minimum: 0,
+            maximum: 999999,
+            title: 'Valor da coleta'
+          }
+        }
       },
-      posting_deadline: {
-          schema: {
-              title: "Prazo de postagem",
-              type: "object",
-              required: [
-                  days
+      hide: true
+    },
+    services: {
+      schema: {
+        title: 'Modalidades de envio via Jadlog',
+        type: 'array',
+        maxItems: 4,
+        items: {
+          title: 'Opção de serviço de entrega',
+          type: 'object',
+          required: [
+            'service_code'
+          ],
+          properties: {
+            label: {
+              type: 'string',
+              maxLength: 50,
+              title: 'Rótulo',
+              description: 'Nome do serviço exibido aos clientes'
+            },
+            service_code: {
+              type: 'string',
+              enum: [
+                '.PACKAGE',
+                'RODOVIÁRIO',
+                'DOC',
+                'ECONÔMICO',
+                'CORPORATE',
+                '.COM',
+                'CARGO',
+                'EMERGENCIAL',
+                'EXPRESSO'
               ],
-              additionalProperties: false,
+              title: 'Modalidade de envio'
+            }
+          }
+        }
+      },
+      hide: true
+    },
+    posting_deadline: {
+      schema: {
+        title: 'Prazo de postagem',
+        type: 'object',
+        required: [
+          'days'
+        ],
+        additionalProperties: false,
+        properties: {
+          days: {
+            type: 'integer',
+            minimum: 0,
+            maximum: 999999,
+            title: 'Número de dias',
+            description: 'Dias de prazo para postar os produtos após a compra'
+          },
+          working_days: {
+            type: 'boolean',
+            default: true,
+            title: 'Dias úteis'
+          },
+          after_approval: {
+            type: 'boolean',
+            default: true,
+            title: 'Após aprovação do pagamento'
+          }
+        }
+      },
+      hide: false
+    },
+    additional_price: {
+      schema: {
+        type: 'number',
+        minimum: -999999,
+        maximum: 999999,
+        title: 'Custo adicional',
+        description: 'Valor a adicionar (negativo para descontar) no frete calculado via Jadlog'
+      },
+      hide: false
+    },
+    free_no_weight_shipping: {
+      schema: {
+        type: 'boolean',
+        default: false,
+        title: 'Frete grátis sem peso',
+        description: 'Aplica frete grátis se todos os produtos tiverem peso e dimensões zeradas'
+      },
+      hide: false
+    },
+    shipping_rules: {
+      schema: {
+        title: 'Regras de envio',
+        description: 'Aplicar descontos/adicionais condicionados',
+        type: 'array',
+        maxItems: 300,
+        items: {
+          title: 'Regra de envio',
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            service_code: {
+              type: 'string',
+              enum: [
+                '.PACKAGE',
+                'RODOVIÁRIO',
+                'DOC',
+                'ECONÔMICO',
+                'CORPORATE',
+                '.COM',
+                'CARGO',
+                'EMERGENCIAL',
+                'EXPRESSO'
+              ],
+              default: '.PACKAGE',
+              title: 'Modalidade de envio'
+            },
+            zip_range: {
+              title: 'Faixa de CEP',
+              type: 'object',
+              required: [
+                'min',
+                'max'
+              ],
               properties: {
-                  days: {
-                      type: "integer",
-                      minimum: 0,
-                      maximum: 999999,
-                      title: "Número de dias",
-                      description: "Dias de prazo para postar os produtos após a compra"
-                  },
-                  working_days: {
-                      type: "boolean",
-                      default: true,
-                      title: "Dias úteis"
-                  },
-                  after_approval: {
-                      type: "boolean",
-                      default: true,
-                      title: "Após aprovação do pagamento"
-                  }
+                min: {
+                  type: 'integer',
+                  minimum: 10000,
+                  maximum: 999999999,
+                  title: 'CEP inicial'
+                },
+                max: {
+                  type: 'integer',
+                  minimum: 10000,
+                  maximum: 999999999,
+                  title: 'CEP final'
+                }
               }
-          },
-          hide: true
-      },
-      additional_price: {
-          schema: {
-              type: "number",
-              minimum: -999999,
-              maximum: 999999,
-              title: "Custo adicional",
-              description: "Valor a adicionar (negativo para descontar) em todas as regras de frete personalizado"
-          },
-          hide: true
-      },
-      shipping_rules: {
-          schema: {
-              title: "Regras de envio",
-              description: "Valor do frete e previsão de entrega condicionados. Tabela exemplo https://bit.ly/34ZhqVg",
-              type: "array",
-              maxItems: 1000,
-              items: {
-                  title: "Regra de envio",
-                  type: "object",
-                  required: [
-                      service_code,
-                      delivery_time,
-                      total_price
-                  ],
-                  properties: {
-                      service_code: {
-                          type: "string",
-                          maxLength: 10,
-                          pattern: "^[A-Za-z0-9-_.]+$",
-                          title: "Código do serviço"
-                      },
-                      zip_range: {
-                          title: "Faixa de CEP atendida",
-                          type: "object",
-                          required: [
-                              min,
-                              max
-                          ],
-                          properties: {
-                              min: {
-                                  type: "integer",
-                                  minimum: 10000,
-                                  maximum: 999999999,
-                                  title: "CEP inicial"
-                              },
-                              max: {
-                                  type: "integer",
-                                  minimum: 10000,
-                                  maximum: 999999999,
-                                  title: "CEP final"
-                              }
-                          }
-                      },
-                      min_amount: {
-                          type: "number",
-                          minimum: 1,
-                          maximum: 999999999,
-                          title: "Valor mínimo da compra"
-                      },
-                      max_cubic_weight: {
-                          type: "number",
-                          minimum: 0,
-                          maximum: 999999,
-                          title: "Peso máximo",
-                          description: "Peso cúbico (C x L x A / 6.000) máximo em Kg"
-                      },
-                      delivery_time: {
-                          title: "Prazo de entrega",
-                          type: "object",
-                          required: [
-                              days
-                          ],
-                          additionalProperties: false,
-                          properties: {
-                              days: {
-                                  type: "integer",
-                                  minimum: 0,
-                                  maximum: 999999,
-                                  default: 20,
-                                  title: "Prazo de entrega (dias)",
-                                  description: "Número de dias estimado para entrega após o despacho"
-                              },
-                              working_days: {
-                                  type: "boolean",
-                                  default: true,
-                                  title: "Dias úteis",
-                                  description: "Se o prazo é calculado em dias úteis"
-                              }
-                          }
-                      },
-                      interval: {
-                        type: "number",
-                        minimum: 1,
-                        maximum: 999999999,
-                        title: "Intervalo entre agendamentos (Minutos)"
-                    },
-                      total_price: {
-                          type: "number",
-                          minimum: 0,
-                          maximum: 9999999999,
-                          title: "Preço",
-                          description: "Valor do frete com possíveis taxas e adicionais fixos"
-                      },
-                      disable_free_shipping_from: {
-                          type: "boolean",
-                          default: false,
-                          title: "Não informar frete grátis",
-                          description: "Desabilita esta regra nas mensagens \"frete grátis a partir\""
-                      },
-                      excedent_weight_cost: {
-                          type: "number",
-                          minimum: 0,
-                          maximum: 99999999,
-                          title: "Custo por peso excedente",
-                          description: "Valor adicional variável por Kg (peso cúbico) excedente"
-                      },
-                      amount_tax: {
-                          type: "number",
-                          minimum: -100,
-                          maximum: 100,
-                          title: "Taxa sobre o subtotal",
-                          description: "Adicional/desconto percentual sobre o valor subtotal da compra"
-                      }
-                  }
+            },
+            min_amount: {
+              type: 'number',
+              minimum: 1,
+              maximum: 999999999,
+              title: 'Valor mínimo da compra'
+            },
+            free_shipping: {
+              type: 'boolean',
+              default: false,
+              title: 'Frete grátis'
+            },
+            discount: {
+              title: 'Desconto',
+              type: 'object',
+              required: [
+                'value'
+              ],
+              properties: {
+                percentage: {
+                  type: 'boolean',
+                  default: false,
+                  title: 'Desconto percentual'
+                },
+                value: {
+                  type: 'number',
+                  minimum: -99999999,
+                  maximum: 99999999,
+                  title: 'Valor do desconto',
+                  description: 'Valor percentual/fixo do desconto ou acréscimo (negativo)'
+                }
               }
-          },
-          hide: true
-      }
+            }
+          }
+        }
+      },
+      hide: false
+    }
   }
   
 }
