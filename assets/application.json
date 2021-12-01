@@ -1,11 +1,16 @@
 {
-  "app_id": 9000,
-  "title": "My Awesome E-Com Plus App",
-  "slug": "my-awesome-ecom-plus-app",
+  "app_id": 131722,
+  "title": "CliqueSaúde - Agendamentos",
+  "slug": "cliquesaude-agendamentos",
   "type": "external",
   "state": "active",
   "authentication": true,
-  "modules": {},
+  "modules": {
+    "calculate_shipping": {
+      "enabled": true,
+      "endpoint": "https://us-central1-cliquesaude-ecomplus.cloudfunctions.net/app/ecom/modules/calculate-shipping"
+    }
+  },
   "auth_scope": {
     "stores/me": [
       "GET"
@@ -16,8 +21,12 @@
     "products": [],
     "brands": [],
     "categories": [],
-    "customers": [],
-    "orders": [],
+    "customers": [
+      "GET"
+    ],
+    "orders": [
+      "GET"
+    ],
     "carts": [],
     "orders/fulfillments": [],
     "orders/payments_history": [],
@@ -26,6 +35,241 @@
     "products/price": [],
     "products/variations/price": []
   },
-  "auth_callback_uri": "https://us-central1-ecom-app-boilerplate.cloudfunctions.net/app/ecom/auth-callback",
+  "admin_settings": {
+    "zip": {
+      "schema": {
+        "type": "string",
+        "maxLength": 9,
+        "pattern": "^[0-9]{5}-?[0-9]{3}$",
+        "title": "CEP de origem",
+        "description": "Código postal do remetente para cálculo do frete"
+      },
+      "hide": false
+    },
+    "jadlog_contract": {
+      "schema": {
+        "title": "Contrato",
+        "description": "Informações do contrato com a Jadlog (solicite ao suporte comercial da Jadlog)",
+        "type": "object",
+        "required": [
+          "account",
+          "token"
+        ],
+        "properties": {
+          "account": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Número da conta"
+          },
+          "token": {
+            "type": "string",
+            "maxLength": 250,
+            "title": "Token"
+          },
+          "contract": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Contrato"
+          },
+          "doc_number": {
+            "type": "string",
+            "maxLength": 14,
+            "title": "CNPJ do contratante",
+            "description": "Usado para vincular tabela de frete especial (apenas números)"
+          },
+          "insurance_type": {
+            "type": "string",
+            "enum": [
+              "Normal",
+              "Apólice própria"
+            ],
+            "default": "Apólice própria",
+            "title": "Tipo de seguro"
+          },
+          "collection_cost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999,
+            "title": "Valor da coleta"
+          }
+        }
+      },
+      "hide": true
+    },
+    "services": {
+      "schema": {
+        "title": "Modalidades de envio via Jadlog",
+        "type": "array",
+        "maxItems": 4,
+        "items": {
+          "title": "Opção de serviço de entrega",
+          "type": "object",
+          "required": [
+            "service_code"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "maxLength": 50,
+              "title": "Rótulo",
+              "description": "Nome do serviço exibido aos clientes"
+            },
+            "service_code": {
+              "type": "string",
+              "enum": [
+                ".PACKAGE",
+                "RODOVIÁRIO",
+                "DOC",
+                "ECONÔMICO",
+                "CORPORATE",
+                ".COM",
+                "CARGO",
+                "EMERGENCIAL",
+                "EXPRESSO"
+              ],
+              "title": "Modalidade de envio"
+            }
+          }
+        }
+      },
+      "hide": true
+    },
+    "posting_deadline": {
+      "schema": {
+        "title": "Prazo de postagem",
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999,
+            "title": "Número de dias",
+            "description": "Dias de prazo para postar os produtos após a compra"
+          },
+          "working_days": {
+            "type": "boolean",
+            "default": true,
+            "title": "Dias úteis"
+          },
+          "after_approval": {
+            "type": "boolean",
+            "default": true,
+            "title": "Após aprovação do pagamento"
+          }
+        }
+      },
+      "hide": false
+    },
+    "additional_price": {
+      "schema": {
+        "type": "number",
+        "minimum": -999999,
+        "maximum": 999999,
+        "title": "Custo adicional",
+        "description": "Valor a adicionar (negativo para descontar) no frete calculado via Jadlog"
+      },
+      "hide": false
+    },
+    "free_no_weight_shipping": {
+      "schema": {
+        "type": "boolean",
+        "default": false,
+        "title": "Frete grátis sem peso",
+        "description": "Aplica frete grátis se todos os produtos tiverem peso e dimensões zeradas"
+      },
+      "hide": false
+    },
+    "shipping_rules": {
+      "schema": {
+        "title": "Regras de envio",
+        "description": "Aplicar descontos/adicionais condicionados",
+        "type": "array",
+        "maxItems": 300,
+        "items": {
+          "title": "Regra de envio",
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "service_code": {
+              "type": "string",
+              "enum": [
+                ".PACKAGE",
+                "RODOVIÁRIO",
+                "DOC",
+                "ECONÔMICO",
+                "CORPORATE",
+                ".COM",
+                "CARGO",
+                "EMERGENCIAL",
+                "EXPRESSO"
+              ],
+              "default": ".PACKAGE",
+              "title": "Modalidade de envio"
+            },
+            "zip_range": {
+              "title": "Faixa de CEP",
+              "type": "object",
+              "required": [
+                "min",
+                "max"
+              ],
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 10000,
+                  "maximum": 999999999,
+                  "title": "CEP inicial"
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 10000,
+                  "maximum": 999999999,
+                  "title": "CEP final"
+                }
+              }
+            },
+            "min_amount": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 999999999,
+              "title": "Valor mínimo da compra"
+            },
+            "free_shipping": {
+              "type": "boolean",
+              "default": false,
+              "title": "Frete grátis"
+            },
+            "discount": {
+              "title": "Desconto",
+              "type": "object",
+              "required": [
+                "value"
+              ],
+              "properties": {
+                "percentage": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "Desconto percentual"
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": -99999999,
+                  "maximum": 99999999,
+                  "title": "Valor do desconto",
+                  "description": "Valor percentual/fixo do desconto ou acréscimo (negativo)"
+                }
+              }
+            }
+          }
+        }
+      },
+      "hide": false
+    }
+  },
+  "auth_callback_uri": "https://us-central1-cliquesaude-ecomplus.cloudfunctions.net/app/ecom/auth-callback",
   "version": "1.0.0"
 }
