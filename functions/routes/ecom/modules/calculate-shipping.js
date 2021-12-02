@@ -234,6 +234,6 @@ exports.post = ({ appSdk }, req, res) => {
         }
       }
     }
-
+    console.log(response)
   res.send(response)
 }
