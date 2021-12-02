@@ -220,6 +220,9 @@ exports.post = ({ appSdk }, req, res) => {
                   working_days: true,
                   ...rule.delivery_time
                 },
+                delivery_rules:{
+                  ...rule.delivery_rules
+                },
                 posting_deadline: {
                   days: 0,
                   ...config.posting_deadline,
