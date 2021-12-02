@@ -222,7 +222,6 @@ exports.post = ({ appSdk }, req, res) => {
                 zip: String((rule.from && rule.from.zip) || originZip).replace(/\D/g, '')
               },
               to: params.to,
-              discount: 0,
               price: 0,
               total_price: 0,
               // price, total_price (and maybe more) from rule object
@@ -238,39 +237,7 @@ exports.post = ({ appSdk }, req, res) => {
                 ...rule.posting_deadline
               }
             }
-          }
-          let vldeclarado = params.subtotal || 0
-          if (Array.isArray(config.shipping_rules)) {
-            for (let i = 0; i < config.shipping_rules.length; i++) {
-              const rule = config.shipping_rules[i]
-              if (
-                rule &&
-                (!rule.service_code || rule.service_code === serviceCode) &&
-                checkZipCode(rule) &&
-                !(rule.min_amount > vldeclarado)
-              ) {
-                // valid shipping rule
-                if (rule.free_shipping) {
-                  shippingLine.discount += shippingLine.total_price
-                  shippingLine.total_price = 0
-                  break
-                } else if (rule.discount) {
-                  let discountValue = rule.discount.value
-                  if (rule.discount.percentage) {
-                    discountValue *= (shippingLine.total_price / 100)
-                  }
-                  if (discountValue) {
-                    shippingLine.discount += discountValue
-                    shippingLine.total_price -= discountValue
-                    if (shippingLine.total_price < 0) {
-                      shippingLine.total_price = 0
-                    }
-                  }
-                  break
-                }
-              }
-            }
-          }            
+          }                   
           response.shipping_services.push(shippingLine)
         }
       }

@@ -287,27 +287,7 @@ const app = {
               type: 'boolean',
               default: false,
               title: 'Frete grátis'
-            },
-            discount: {
-              title: 'Desconto',
-              type: 'object',
-              required: [
-                'value'
-              ],
-              properties: {
-                percentage: {
-                  type: 'boolean',
-                  default: false,
-                  title: 'Desconto percentual'
-                },
-                value: {
-                  type: 'number',
-                  minimum: -99999999,
-                  maximum: 99999999,
-                  title: 'Valor do desconto',
-                  description: 'Valor percentual/fixo do desconto ou acréscimo (negativo)'
-                }
-              }
+            }            
             }
           }
         }
