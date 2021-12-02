@@ -240,9 +240,9 @@ exports.post = ({ appSdk }, req, res) => {
             }
           }
           let vldeclarado = params.subtotal || 0
-          if (Array.isArray(appData.shipping_rules)) {
-            for (let i = 0; i < appData.shipping_rules.length; i++) {
-              const rule = appData.shipping_rules[i]
+          if (Array.isArray(config.shipping_rules)) {
+            for (let i = 0; i < config.shipping_rules.length; i++) {
+              const rule = config.shipping_rules[i]
               if (
                 rule &&
                 (!rule.service_code || rule.service_code === serviceCode) &&
