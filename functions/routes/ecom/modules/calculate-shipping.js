@@ -238,7 +238,8 @@ exports.post = ({ appSdk }, req, res) => {
                 ...rule.posting_deadline
               }
             }
-          }                   
+          }
+                   
           response.shipping_services.push(shippingLine)
         }
       }
