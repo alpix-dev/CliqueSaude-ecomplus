@@ -42,54 +42,38 @@
         "maxLength": 9,
         "pattern": "^[0-9]{5}-?[0-9]{3}$",
         "title": "CEP de origem",
-        "description": "Código postal do remetente para cálculo do frete"
+        "description": "Código postal do remetente ou centro de distribuição"
       },
       "hide": false
     },
     "services": {
       "schema": {
-        "title": "Modalidades de envio com agendamento",
+        "title": "Serviços de entrega personalizados",
         "type": "array",
-        "maxItems": 99,
+        "maxItems": 50,
         "items": {
           "title": "Opção de serviço de entrega",
           "type": "object",
           "required": [
-            "service_code",
-            "working_open",
-            "working_close"
+            "service_code"
           ],
           "properties": {
             "label": {
               "type": "string",
               "maxLength": 50,
               "title": "Rótulo",
-              "description": "Nome do serviço/modalidade exibido aos clientes"
+              "description": "Nome do serviço exibido aos clientes"
+            },
+            "carrier": {
+              "type": "string",
+              "maxLength": 200,
+              "title": "Transportadora"
             },
             "service_code": {
               "type": "string",
-              "maxLength": 3,
+              "maxLength": 10,
               "pattern": "^[A-Za-z0-9-_.]+$",
-              "title": "Código do Serviço"
-            },
-            "working_open": {
-              "type": "string",
-              "maxLength": 5,
-              "title": "Horário de Abertura dos Agendamentos",
-              "description": "Exemplo: 7:30"
-            },
-            "working_close": {
-              "type": "string",
-              "maxLength": 5,
-              "title": "Horário de Encerramento dos Agendamentos",
-              "description": "Exemplo: 18:00"
-            },
-            "interval": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 99999,
-              "title": "Intervalo entre agendamentos",
-              "description": "Informar intervalo em minutos entre os agendamentos"
+              "title": "Código do serviço"
             }
           }
         }
@@ -124,7 +108,7 @@
           }
         }
       },
-      "hide": false
+      "hide": true
     },
     "additional_price": {
       "schema": {
@@ -132,29 +116,33 @@
         "minimum": -999999,
         "maximum": 999999,
         "title": "Custo adicional",
-        "description": "Valor a adicionar (negativo para descontar) no frete calculado via Jadlog"
+        "description": "Valor a adicionar (negativo para descontar) em todas as regras de frete personalizado"
       },
-      "hide": false
+      "hide": true
     },
     "shipping_rules": {
       "schema": {
-        "title": "Regras de envio/agendamento/coleta",
-        "description": "Aplicar descontos/adicionais condicionados",
+        "title": "Regras de envio",
+        "description": "Valor do frete e previsão de entrega condicionados. Tabela exemplo https://bit.ly/34ZhqVg",
         "type": "array",
-        "maxItems": 300,
+        "maxItems": 1000,
         "items": {
           "title": "Regra de envio",
           "type": "object",
-          "minProperties": 1,
+          "required": [
+            "service_code",
+            "delivery_time",
+            "total_price"
+          ],
           "properties": {
             "service_code": {
               "type": "string",
-              "maxLength": 3,
+              "maxLength": 10,
               "pattern": "^[A-Za-z0-9-_.]+$",
-              "title": "Código do Serviço"
+              "title": "Código do serviço"
             },
             "zip_range": {
-              "title": "Faixa de CEP",
+              "title": "Faixa de CEP atendida",
               "type": "object",
               "required": [
                 "min",
@@ -163,13 +151,13 @@
               "properties": {
                 "min": {
                   "type": "integer",
-                  "minimum": 0,
+                  "minimum": 10000,
                   "maximum": 999999999,
                   "title": "CEP inicial"
                 },
                 "max": {
                   "type": "integer",
-                  "minimum": 0,
+                  "minimum": 10000,
                   "maximum": 999999999,
                   "title": "CEP final"
                 }
@@ -181,36 +169,68 @@
               "maximum": 999999999,
               "title": "Valor mínimo da compra"
             },
-            "free_shipping": {
-              "type": "boolean",
-              "default": false,
-              "title": "Frete grátis"
+            "max_cubic_weight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 999999,
+              "title": "Peso máximo",
+              "description": "Peso cúbico (C x L x A / 6.000) máximo em Kg"
             },
-            "discount": {
-              "title": "Desconto",
+            "delivery_time": {
+              "title": "Prazo de entrega",
               "type": "object",
               "required": [
-                "value"
+                "days"
               ],
+              "additionalProperties": false,
               "properties": {
-                "percentage": {
-                  "type": "boolean",
-                  "default": false,
-                  "title": "Desconto percentual"
+                "days": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 999999,
+                  "default": 20,
+                  "title": "Prazo de entrega (dias)",
+                  "description": "Número de dias estimado para entrega após o despacho"
                 },
-                "value": {
-                  "type": "number",
-                  "minimum": -99999999,
-                  "maximum": 99999999,
-                  "title": "Valor do desconto",
-                  "description": "Valor percentual/fixo do desconto ou acréscimo (negativo)"
+                "working_days": {
+                  "type": "boolean",
+                  "default": true,
+                  "title": "Dias úteis",
+                  "description": "Se o prazo é calculado em dias úteis"
                 }
               }
+            },
+            "total_price": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 9999999999,
+              "title": "Preço",
+              "description": "Valor do frete com possíveis taxas e adicionais fixos"
+            },
+            "disable_free_shipping_from": {
+              "type": "boolean",
+              "default": false,
+              "title": "Não informar frete grátis",
+              "description": "Desabilita esta regra nas mensagens \"frete grátis a partir\""
+            },
+            "excedent_weight_cost": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 99999999,
+              "title": "Custo por peso excedente",
+              "description": "Valor adicional variável por Kg (peso cúbico) excedente"
+            },
+            "amount_tax": {
+              "type": "number",
+              "minimum": -100,
+              "maximum": 100,
+              "title": "Taxa sobre o subtotal",
+              "description": "Adicional/desconto percentual sobre o valor subtotal da compra"
             }
           }
         }
       },
-      "hide": false
+      "hide": true
     }
   },
   "auth_callback_uri": "https://us-central1-cliquesaude-ecomplus.cloudfunctions.net/app/ecom/auth-callback",
