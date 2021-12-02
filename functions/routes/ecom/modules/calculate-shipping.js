@@ -196,6 +196,7 @@ exports.post = ({ appSdk }, req, res) => {
           delete rule.excedent_weight_cost
           delete rule.amount_tax
           delete rule.label
+          delete rule.discount
 
           // also try to find corresponding service object from config
           let service
