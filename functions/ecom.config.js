@@ -146,7 +146,7 @@ const app = {
         title: "CEP de origem",
         description: "Código postal do remetente ou centro de distribuição"
       },
-      hide: true
+      hide: false
     },
     services: {
       schema: {
@@ -157,7 +157,7 @@ const app = {
           title: "Opção de serviço de entrega",
           type: "object",
           required: [
-            service_code
+            'service_code'
           ],
           properties: {
             label: {
@@ -187,7 +187,7 @@ const app = {
         title: "Prazo de postagem",
         type: "object",
         required: [
-          days
+          'days'
         ],
         additionalProperties: false,
         properties: {
@@ -232,9 +232,9 @@ const app = {
           title: "Regra de envio",
           type: "object",
           required: [
-            service_code,
-            delivery_time,
-            total_price
+            'service_code',
+            'delivery_time',
+            'total_price'
           ],
           properties: {
             service_code: {
@@ -247,8 +247,8 @@ const app = {
               title: "Faixa de CEP atendida",
               type: "object",
               required: [
-                min,
-                max
+                'min',
+                'max'
               ],
               properties: {
                 min: {
@@ -282,7 +282,7 @@ const app = {
               title: "Prazo de entrega",
               type: "object",
               required: [
-                days
+                'days'
               ],
               additionalProperties: false,
               properties: {
