@@ -37,6 +37,7 @@ exports.post = ({ appSdk }, req, res) => {
   }
 
   // search for configured free shipping rule and origin zip by rule
+  
   for (let i = 0; i < shippingRules.length; i++) {
     const rule = shippingRules[i]
     if (
@@ -209,8 +210,7 @@ exports.post = ({ appSdk }, req, res) => {
           if (!label) {
             label = serviceCode
           }
-
-          response.shipping_services.push({
+          const shippingLine = {
             // label, service_code, carrier (and maybe more) from service object
             ...service,
             service_code: serviceCode,
@@ -222,6 +222,7 @@ exports.post = ({ appSdk }, req, res) => {
                 zip: String((rule.from && rule.from.zip) || originZip).replace(/\D/g, '')
               },
               to: params.to,
+              discount: 0,
               price: 0,
               total_price: 0,
               // price, total_price (and maybe more) from rule object
@@ -237,7 +238,40 @@ exports.post = ({ appSdk }, req, res) => {
                 ...rule.posting_deadline
               }
             }
-          })
+          }
+          let vldeclarado = params.subtotal || 0
+          if (Array.isArray(appData.shipping_rules)) {
+            for (let i = 0; i < appData.shipping_rules.length; i++) {
+              const rule = appData.shipping_rules[i]
+              if (
+                rule &&
+                (!rule.service_code || rule.service_code === serviceCode) &&
+                checkZipCode(rule) &&
+                !(rule.min_amount > vldeclarado)
+              ) {
+                // valid shipping rule
+                if (rule.free_shipping) {
+                  shippingLine.discount += shippingLine.total_price
+                  shippingLine.total_price = 0
+                  break
+                } else if (rule.discount) {
+                  let discountValue = rule.discount.value
+                  if (rule.discount.percentage) {
+                    discountValue *= (shippingLine.total_price / 100)
+                  }
+                  if (discountValue) {
+                    shippingLine.discount += discountValue
+                    shippingLine.total_price -= discountValue
+                    if (shippingLine.total_price < 0) {
+                      shippingLine.total_price = 0
+                    }
+                  }
+                  break
+                }
+              }
+            }
+          }            
+          response.shipping_services.push(shippingLine)
         }
       }
     }
