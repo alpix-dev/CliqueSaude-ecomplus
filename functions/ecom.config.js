@@ -140,59 +140,43 @@ const app = {
   admin_settings: {
     zip: {
       schema: {
-        type: 'string',
+        type: "string",
         maxLength: 9,
-        pattern: '^[0-9]{5}-?[0-9]{3}$',
-        title: 'CEP de origem',
-        description: 'Código postal do remetente para cálculo do frete'
+        pattern: "^[0-9]{5}-?[0-9]{3}$",
+        title: "CEP de origem",
+        description: "Código postal do remetente ou centro de distribuição"
       },
-      hide: false
+      hide: true
     },
     services: {
       schema: {
-        title: 'Modalidades de envio com agendamento',
-        type: 'array',
-        maxItems: 99,
+        title: "Serviços de entrega personalizados",
+        type: "array",
+        maxItems: 50,
         items: {
-          title: 'Opção de serviço de entrega',
-          type: 'object',
+          title: "Opção de serviço de entrega",
+          type: "object",
           required: [
-            'service_code',
-            'working_open',
-            'working_close'
+            service_code
           ],
           properties: {
             label: {
-              type: 'string',
+              type: "string",
               maxLength: 50,
-              title: 'Rótulo',
-              description: 'Nome do serviço/modalidade exibido aos clientes'
+              title: "Rótulo",
+              description: "Nome do serviço exibido aos clientes"
+            },
+            carrier: {
+              type: "string",
+              maxLength: 200,
+              title: "Transportadora"
             },
             service_code: {
-              type: 'string',
-              maxLength:3,
-              pattern: '^[A-Za-z0-9-_.]+$',
-              title: 'Código do Serviço'
-            },
-            working_open: {
-              type: 'string',
-              maxLength:5,
-              title: 'Horário de Abertura dos Agendamentos',
-              description: 'Exemplo: 7:30'
-            },
-            working_close: {
-              type: 'string',
-              maxLength:5,
-              title: 'Horário de Encerramento dos Agendamentos',
-              description: 'Exemplo: 18:00'
-            },
-            interval: {
-              type: 'number',
-              minimum: 0,
-              maximum:99999,
-              title: 'Intervalo entre agendamentos',
-              description: 'Informar intervalo em minutos entre os agendamentos'
-            },
+              type: "string",
+              maxLength: 10,
+              pattern: "^[A-Za-z0-9-_.]+$",
+              title: "Código do serviço"
+            }
           }
         }
       },
@@ -200,102 +184,157 @@ const app = {
     },
     posting_deadline: {
       schema: {
-        title: 'Prazo de postagem',
-        type: 'object',
+        title: "Prazo de postagem",
+        type: "object",
         required: [
-          'days'
+          days
         ],
         additionalProperties: false,
         properties: {
           days: {
-            type: 'integer',
+            type: "integer",
             minimum: 0,
             maximum: 999999,
-            title: 'Número de dias',
-            description: 'Dias de prazo para postar os produtos após a compra'
+            title: "Número de dias",
+            description: "Dias de prazo para postar os produtos após a compra"
           },
           working_days: {
-            type: 'boolean',
+            type: "boolean",
             default: true,
-            title: 'Dias úteis'
+            title: "Dias úteis"
           },
           after_approval: {
-            type: 'boolean',
+            type: "boolean",
             default: true,
-            title: 'Após aprovação do pagamento'
+            title: "Após aprovação do pagamento"
           }
         }
       },
-      hide: false
+      hide: true
     },
     additional_price: {
       schema: {
-        type: 'number',
+        type: "number",
         minimum: -999999,
         maximum: 999999,
-        title: 'Custo adicional',
-        description: 'Valor a adicionar (negativo para descontar) no frete calculado via Jadlog'
+        title: "Custo adicional",
+        description: "Valor a adicionar (negativo para descontar) em todas as regras de frete personalizado"
       },
-      hide: false
+      hide: true
     },
     shipping_rules: {
       schema: {
-        title: 'Regras de envio/agendamento/coleta',
-        description: 'Aplicar descontos/adicionais condicionados',
-        type: 'array',
-        maxItems: 300,
+        title: "Regras de envio",
+        description: "Valor do frete e previsão de entrega condicionados. Tabela exemplo https://bit.ly/34ZhqVg",
+        type: "array",
+        maxItems: 1000,
         items: {
-          title: 'Regra de envio',
-          type: 'object',
-          minProperties: 1,
+          title: "Regra de envio",
+          type: "object",
+          required: [
+            service_code,
+            delivery_time,
+            total_price
+          ],
           properties: {
             service_code: {
-              type: 'string',
-              maxLength:3,
-              pattern: '^[A-Za-z0-9-_.]+$',
-              title: 'Código do Serviço'
+              type: "string",
+              maxLength: 10,
+              pattern: "^[A-Za-z0-9-_.]+$",
+              title: "Código do serviço"
             },
             zip_range: {
-              title: 'Faixa de CEP',
-              type: 'object',
+              title: "Faixa de CEP atendida",
+              type: "object",
               required: [
-                'min',
-                'max'
+                min,
+                max
               ],
               properties: {
                 min: {
-                  type: 'integer',
-                  minimum: 0,
+                  type: "integer",
+                  minimum: 10000,
                   maximum: 999999999,
-                  title: 'CEP inicial'
+                  title: "CEP inicial"
                 },
                 max: {
-                  type: 'integer',
-                  minimum: 0,
+                  type: "integer",
+                  minimum: 10000,
                   maximum: 999999999,
-                  title: 'CEP final'
+                  title: "CEP final"
                 }
               }
             },
             min_amount: {
-              type: 'number',
+              type: "number",
               minimum: 1,
               maximum: 999999999,
-              title: 'Valor mínimo da compra'
+              title: "Valor mínimo da compra"
             },
-            free_shipping: {
-              type: 'boolean',
+            max_cubic_weight: {
+              type: "number",
+              minimum: 0,
+              maximum: 999999,
+              title: "Peso máximo",
+              description: "Peso cúbico (C x L x A / 6.000) máximo em Kg"
+            },
+            delivery_time: {
+              title: "Prazo de entrega",
+              type: "object",
+              required: [
+                days
+              ],
+              additionalProperties: false,
+              properties: {
+                days: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 999999,
+                  default: 20,
+                  title: "Prazo de entrega (dias)",
+                  description: "Número de dias estimado para entrega após o despacho"
+                },
+                working_days: {
+                  type: "boolean",
+                  default: true,
+                  title: "Dias úteis",
+                  description: "Se o prazo é calculado em dias úteis"
+                }
+              }
+            },
+            total_price: {
+              type: "number",
+              minimum: 0,
+              maximum: 9999999999,
+              title: "Preço",
+              description: "Valor do frete com possíveis taxas e adicionais fixos"
+            },
+            disable_free_shipping_from: {
+              type: "boolean",
               default: false,
-              title: 'Frete grátis'
-            }            
+              title: "Não informar frete grátis",
+              description: "Desabilita esta regra nas mensagens \"frete grátis a partir\""
+            },
+            excedent_weight_cost: {
+              type: "number",
+              minimum: 0,
+              maximum: 99999999,
+              title: "Custo por peso excedente",
+              description: "Valor adicional variável por Kg (peso cúbico) excedente"
+            },
+            amount_tax: {
+              type: "number",
+              minimum: -100,
+              maximum: 100,
+              title: "Taxa sobre o subtotal",
+              description: "Adicional/desconto percentual sobre o valor subtotal da compra"
             }
           }
         }
       },
-      hide: false
-    }
-  }
-  
+      hide: true
+    } 
+  } 
 }
 
 
