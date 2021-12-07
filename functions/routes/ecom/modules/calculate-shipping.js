@@ -234,6 +234,6 @@ exports.post = ({ appSdk }, req, res) => {
         }
       }
     }
-    console.log(response)
+    console.log(params.scheduleDate)
   res.send(response)
 }
