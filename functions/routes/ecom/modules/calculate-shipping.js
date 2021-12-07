@@ -1,10 +1,13 @@
 exports.post = ({ appSdk, admin }, req, res) => {  
   const { application } = req.body
-  var { params } = req.body
+  let { params } = req.body
+  console.log('-----a-------')
+  console.log(params)
+  console.log('-----b-------')
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
     
-    var scheduleDate = null 
+    let scheduleDate = null 
 
     if(params.service_code.includes('|')){
       scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
