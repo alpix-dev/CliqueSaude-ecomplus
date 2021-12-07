@@ -146,21 +146,19 @@ exports.post = ({ appSdk, admin }, req, res) => {
         finalWeight += (quantity * (physicalWeight > cubicWeight ? physicalWeight : cubicWeight))
       })
 
+      const validShippingRules = shippingRules.filter(rule => {
+        if (typeof rule === 'object' && rule) {
+          return (!params.service_code || params.service_code === rule.service_code) &&
+            checkZipCode(rule) &&
+            (!rule.min_amount || amount >= rule.min_amount) &&
+            (!rule.max_cubic_weight || rule.excedent_weight_cost > 0 || finalWeight <= rule.max_cubic_weight)
+        }
+        return false
+      })
+
       if(params.service_code.includes('ScheduleDate:')){
         console.log('-------d------')
         console.log(params.service_code)
-      }else{
-         // start filtering shipping rules
-        const validShippingRules = shippingRules.filter(rule => {
-          if (typeof rule === 'object' && rule) {
-            return (!params.service_code || params.service_code === rule.service_code) &&
-              checkZipCode(rule) &&
-              (!rule.min_amount || amount >= rule.min_amount) &&
-              (!rule.max_cubic_weight || rule.excedent_weight_cost > 0 || finalWeight <= rule.max_cubic_weight)
-          }
-          return false
-        })
-
       }
      
       if (validShippingRules.length) {
