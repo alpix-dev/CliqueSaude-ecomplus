@@ -1,13 +1,17 @@
 exports.post = ({ appSdk, admin }, req, res) => {  
-  const { params, application } = req.body
+  const { application } = req.body
+  var { params } = req.body
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
-    console.log('-----a------')
-    console.log(params)
-    console.log('-----b------')
-    console.log(req.body)
-    console.log('-----c------')
-    console.log(params.scheduleDate)
+    
+    var scheduleDate = null 
+
+    if(params.service_code.includes('|')){
+      scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
+      params.service_code = params.service_code.split('|')[0]
+    }else{
+      scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.replace('ScheduleDate:','') : null
+    }
 
 
     // start mounting response body
@@ -146,6 +150,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
         finalWeight += (quantity * (physicalWeight > cubicWeight ? physicalWeight : cubicWeight))
       })
 
+      
+
       const validShippingRules = shippingRules.filter(rule => {
         if (typeof rule === 'object' && rule) {
           return (!params.service_code || params.service_code === rule.service_code) &&
@@ -156,10 +162,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
         return false
       })
 
-      if(params.service_code.includes('ScheduleDate:')){
-        console.log('-------d------')
-        console.log(params.service_code)
-      }
+      
+      
      
       if (validShippingRules.length) {
         // group by service code selecting lower price
