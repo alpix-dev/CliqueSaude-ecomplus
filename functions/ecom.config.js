@@ -302,7 +302,7 @@ const app = {
                 }
               }
             },
-            delivery_rules: {
+            custom_fields: {
               title: "Regras de Agendamento",
               type: "object",
               additionalProperties: true,
