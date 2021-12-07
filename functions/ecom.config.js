@@ -301,65 +301,38 @@ const app = {
                   description: "Se o prazo é calculado em dias úteis"
                 }
               }
-            },
+            },            
             custom_fields: {
               title: "Regras de Agendamento",
-              type: "object",
-              additionalProperties: true,
-              properties: {
-                allow_sun: {
-                  type: "boolean",
-                  default: false,
-                  title: "Segunda"
-                },
-                allow_mon: {
-                  type: "boolean",
-                  default: false,
-                  title: "Terça"
-                },
-                allow_tue: {
-                  type: "boolean",
-                  default: false,
-                  title: "Quarta"
-                },
-                allow_wed: {
-                  type: "boolean",
-                  default: false,
-                  title: "Quinta"
-                },
-                allow_thu: {
-                  type: "boolean",
-                  default: false,
-                  title: "Sexta"
-                },
-                allow_fri: {
-                  type: "boolean",
-                  default: false,
-                  title: "Sábado"
-                },
-                allow_sat: {
-                  type: "boolean",
-                  default: false,
-                  title: "Domingo"
-                },
-                open: {
-                  type: "string",
-                  maxLength: 5,
-                  title: "Horário de Abertura da Unidade",
-                  description: "Exemplo: 07:00"
-                },
-                close: {
-                  type: "string",
-                  maxLength: 5,
-                  title: "Horário de Fechamento da Unidade",
-                  description: "Exemplo: 18:30"
-                },
-                interval: {
-                  type: "integer",
-                  minimum: 0,
-                  maximum: 999999,
-                  default: 30,
-                  title: "Invervalo entre agendamentos (minutos)"
+              type: "array",
+              maxItems:7,
+              items:{
+                title: "Regra",
+                type: "object",
+                properties: {
+                  week_day:{
+                    type: "number",
+                    title: "Dia da semana (1-7)"
+                  },
+                  open_at: {
+                    type: "string",
+                    maxLength: 5,
+                    title: "Horário de Abertura da Unidade",
+                    description: "Exemplo: 07:00"
+                  },
+                  close_at: {
+                    type: "string",
+                    maxLength: 5,
+                    title: "Horário de Fechamento da Unidade",
+                    description: "Exemplo: 18:30"
+                  },
+                  interval: {
+                    type: "integer",
+                    minimum: 0,
+                    maximum: 999999,
+                    default: 30,
+                    title: "Invervalo entre agendamentos (minutos)"
+                  }
                 }
               }
             },
