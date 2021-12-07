@@ -304,11 +304,16 @@ const app = {
             },            
             custom_fields: {
               title: "Regras de Agendamento",
-              type: "array",
-              maxItems:7,
+              type: "array",              
               items:{
                 title: "Regra",
                 type: "object",
+                required: [
+                  'open_at',
+                  'close_at',
+                  'week_day',
+                  'interval',
+                ],
                 properties: {
                   week_day:{
                     type: "number",
