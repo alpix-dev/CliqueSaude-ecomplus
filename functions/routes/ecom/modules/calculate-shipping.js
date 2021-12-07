@@ -2,8 +2,14 @@ exports.post = ({ appSdk }, req, res) => {
   const { params, application } = req.body
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
-
+    console.log('-----a------')
+    console.log(params)
+    console.log('-----b------')
+    console.log(req.body)
+    console.log('-----c------')
     console.log(params.scheduleDate)
+
+
     // start mounting response body
     // https://apx-mods.e-com.plus/api/v1/calculate_shipping/response_schema.json?store_id=100
     const response = {
