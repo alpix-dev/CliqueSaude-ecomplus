@@ -1,6 +1,8 @@
 exports.post = ({ appSdk, admin }, req, res) => {  
+  const { storeId } = req
   const { application } = req.body
   let { params } = req.body
+  console.log('-------'+ storeId +'-------')
   console.log('-----a-------')
   console.log(params)
   console.log('-----b-------')
@@ -20,6 +22,11 @@ exports.post = ({ appSdk, admin }, req, res) => {
     console.log('-----c-------')
     console.log(params)
     console.log('-----d-------')
+
+    if(scheduleDate != null){
+      //admin.firestore().doc(`prizes/${storeId}`).set({
+    }
+
     // start mounting response body
     // https://apx-mods.e-com.plus/api/v1/calculate_shipping/response_schema.json?store_id=100
     const response = {
