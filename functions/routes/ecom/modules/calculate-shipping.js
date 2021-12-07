@@ -43,9 +43,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     }
     let shippingRules
     if (Array.isArray(config.shipping_rules) && config.shipping_rules.length) {
-      shippingRules = config.shipping_rules
-      console.log(shippingRules)
-      
+           
     } else {
       // anything to do without shipping rules
       res.send(response)
@@ -214,6 +212,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
 
         // parse final shipping rules object to shipping services array
         for (const serviceCode in shippingRulesByCode) {
+          console.log('-------xxxxx--------')
+          console.log(shippingRulesByCode[serviceCode])
+          console.log('-------zzzzz--------')
           const rule = shippingRulesByCode[serviceCode]
           if (rule) {
             let { label } = rule
@@ -237,6 +238,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (!label) {
               label = serviceCode
             }
+
+
 
             response.shipping_services.push({
               // label, service_code, carrier (and maybe more) from service object
