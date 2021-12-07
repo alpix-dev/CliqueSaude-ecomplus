@@ -14,9 +14,12 @@ exports.post = ({ appSdk, admin }, req, res) => {
       params.service_code = params.service_code.split('|')[0]
     }else{
       scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.replace('ScheduleDate:','') : null
+      delete params['service_code']
     }
 
-
+    console.log('-----c-------')
+    console.log(params)
+    console.log('-----d-------')
     // start mounting response body
     // https://apx-mods.e-com.plus/api/v1/calculate_shipping/response_schema.json?store_id=100
     const response = {
