@@ -2,14 +2,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const { storeId } = req
   const { application } = req.body
   let { params } = req.body
-  console.log('-------'+ storeId +'-------')
-  console.log('-----a-------')
-  console.log(params)
-  console.log('-----b-------')
+  // console.log('-------'+ storeId +'-------')
+  // console.log('-----a-------')
+  // console.log(params)
+  // console.log('-----b-------')
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
     
     let scheduleDate = null 
+    let scheduleList = null
 
     if(params.service_code.includes('|')){
       scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
@@ -19,12 +20,20 @@ exports.post = ({ appSdk, admin }, req, res) => {
       delete params['service_code']
     }
 
-    console.log('-----c-------')
-    console.log(params)
-    console.log('-----d-------')
+    // console.log('-----c-------')
+    // console.log(params)
+    // console.log('-----d-------')
 
+    
     if(scheduleDate != null){
-      //admin.firestore().doc(`prizes/${storeId}`).set({
+      let minifyScheduleDate = scheduleDate.replace('/','')
+      admin.firestore().doc(`${storeId}_${minifyScheduleDate}/`).get()
+        .then(function(result){
+          scheduleList = result.data()
+        })
+        .catch(err => {
+          scheduleList = null
+        })
     }
 
     // start mounting response body
@@ -35,6 +44,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
     let shippingRules
     if (Array.isArray(config.shipping_rules) && config.shipping_rules.length) {
       shippingRules = config.shipping_rules
+      console.log(shippingRules)
+      
     } else {
       // anything to do without shipping rules
       res.send(response)
