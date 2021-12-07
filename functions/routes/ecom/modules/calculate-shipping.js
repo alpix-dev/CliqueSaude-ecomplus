@@ -3,6 +3,7 @@ exports.post = ({ appSdk }, req, res) => {
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
 
+    console.log(params.scheduleDate)
     // start mounting response body
     // https://apx-mods.e-com.plus/api/v1/calculate_shipping/response_schema.json?store_id=100
     const response = {
@@ -234,6 +235,6 @@ exports.post = ({ appSdk }, req, res) => {
         }
       }
     }
-    console.log(params.scheduleDate)
+    
   res.send(response)
 }
