@@ -252,6 +252,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
             let day_config
             
             for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
+              console.log(scheduledDeliveryConfig[i])
               day_config = JSON.parse(scheduledDeliveryConfig[i])
 
               if(day_config.week_day == currentDay){
