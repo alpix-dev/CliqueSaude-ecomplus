@@ -227,7 +227,7 @@
               "title": "Taxa sobre o subtotal",
               "description": "Adicional/desconto percentual sobre o valor subtotal da compra"
             },
-            "scheduledDeliveryConfig": {
+            "custom_fields": {
               "title": "Regras de Agendamento",
               "description": "{week_day:1,open_at:'07:00',close_at:'18:00',interval:30}",
               "type": "array",
