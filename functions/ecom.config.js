@@ -302,45 +302,6 @@ const app = {
                 }
               }
             },            
-            custom_fields: {
-              title: "Regras de Agendamento",
-              type: "array",              
-              items:{
-                title: "Regra",
-                type: "object",
-                required: [
-                  'open_at',
-                  'close_at',
-                  'week_day',
-                  'interval',
-                ],
-                properties: {
-                  week_day:{
-                    type: "number",
-                    title: "Dia da semana (1-7)"
-                  },
-                  open_at: {
-                    type: "string",
-                    maxLength: 5,
-                    title: "Horário de Abertura da Unidade",
-                    description: "Exemplo: 07:00"
-                  },
-                  close_at: {
-                    type: "string",
-                    maxLength: 5,
-                    title: "Horário de Fechamento da Unidade",
-                    description: "Exemplo: 18:30"
-                  },
-                  interval: {
-                    type: "integer",
-                    minimum: 0,
-                    maximum: 999999,
-                    default: 30,
-                    title: "Invervalo entre agendamentos (minutos)"
-                  }
-                }
-              }
-            },
             total_price: {
               type: "number",
               minimum: 0,
@@ -372,7 +333,59 @@ const app = {
         }
       },
       hide: true
-    } 
+    },
+    scheduledDeliveryConfig: {
+      schema: {
+        title: "Regras de agendamento",
+        description: "Valor do frete e previsão de entrega condicionados. Tabela exemplo https://bit.ly/34ZhqVg",
+        type: "array",
+        maxItems: 1000,
+        items: {
+          title: "Regras de Agendamento",
+          type: "object",
+          required: [
+            'open_at',
+            'close_at',
+            'week_day',
+            'interval',
+            'service_code',
+          ],
+          properties: {
+            service_code: {
+              type: "string",
+              maxLength: 10,
+              pattern: "^[A-Za-z0-9-_.]+$",
+              title: "Código do serviço"
+            },
+            week_day:{
+              type: "number",
+              title: "Dia da semana (0-7)",
+              description: "0 = Feriado / 1= Segunda / 2= Terça/ 3= Quarta..."
+            },
+            open_at: {
+              type: "string",
+              maxLength: 5,
+              title: "Horário de Abertura da Unidade",
+              description: "Exemplo: 07:00"
+            },
+            close_at: {
+              type: "string",
+              maxLength: 5,
+              title: "Horário de Fechamento da Unidade",
+              description: "Exemplo: 18:30"
+            },
+            interval: {
+              type: "integer",
+              minimum: 0,
+              maximum: 999999,
+              default: 30,
+              title: "Invervalo entre agendamentos (minutos)"
+            }
+          }
+        }
+      },
+      hide: true
+    }  
   } 
 }
 
