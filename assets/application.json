@@ -228,43 +228,12 @@
               "description": "Adicional/desconto percentual sobre o valor subtotal da compra"
             },
             "scheduledDeliveryConfig": {
-              "title": "Lista de clientes selecionados",
-              "description": "Se preenchido, o desconto será disponibilizado apenas para estes clientes",
+              "title": "Regras de Agendamento",
+              "description": "{week_day:1,open_at:'07:00',close_at:'18:00',interval:30}",
               "type": "array",
               "items": {
-                "title": "Regras de Agendamento",
-                "type": "object",
-                "required": [
-                  "open_at",
-                  "close_at",
-                  "week_day",
-                  "interval"
-                ],
-                "properties": {
-                  "week_day": {
-                    "type": "number",
-                    "title": "Dia da semana (1-7)"
-                  },
-                  "open_at": {
-                    "type": "string",
-                    "maxLength": 5,
-                    "title": "Horário de Abertura da Unidade",
-                    "description": "Exemplo: 07:00"
-                  },
-                  "close_at": {
-                    "type": "string",
-                    "maxLength": 5,
-                    "title": "Horário de Fechamento da Unidade",
-                    "description": "Exemplo: 18:30"
-                  },
-                  "interval": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 999999,
-                    "default": 30,
-                    "title": "Invervalo entre agendamentos (minutos)"
-                  }
-                }
+                "type": "string",
+                "title": "JSON de Configuração"
               }
             }
           }
