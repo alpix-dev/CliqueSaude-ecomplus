@@ -2,15 +2,17 @@ exports.post = ({ appSdk, admin }, req, res) => {
   const { storeId } = req
   const { application } = req.body
   let { params } = req.body
-  console.log('-------'+ storeId +'-------')
-  console.log('-----a-------')
-  console.log(params)
-  console.log('-----b-------')
+  // console.log('-------'+ storeId +'-------')
+  // console.log('-----a-------')
+  // console.log(params)
+  // console.log('-----b-------')
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
     
-    let scheduleDate = null 
-    let scheduleList = null
+    let scheduleDate
+    let scheduleList
+    let minifyScheduleDate
+    let currentDay
 
     if(params.service_code.includes('|')){
       scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
@@ -20,13 +22,15 @@ exports.post = ({ appSdk, admin }, req, res) => {
       delete params['service_code']
     }
 
-    console.log('-----c-------')
-    console.log(params)
-    console.log('-----d-------')
+    // console.log('-----c-------')
+    // console.log(params)
+    // console.log('-----d-------')
 
     
     if(scheduleDate != null){
-      let minifyScheduleDate = scheduleDate.replace('/','')
+      const currentDayFormat = new Date(scheduleDate.split('/')[1] + '/' + scheduleDate.split('/')[0] + '/' + scheduleDate.split('/')[2])
+      currentDay = currentDayFormat.getDay()
+      minifyScheduleDate = scheduleDate.replace('/','')
       admin.firestore().doc(`${storeId}_${minifyScheduleDate}/`).get()
         .then(function(result){
           scheduleList = result.data()
@@ -34,6 +38,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
         .catch(err => {
           scheduleList = null
         })
+    }else{
+      res.send(response)
     }
 
     // start mounting response body
@@ -42,6 +48,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
       shipping_services: []
     }
     let shippingRules
+    
+    
     if (Array.isArray(config.shipping_rules) && config.shipping_rules.length) {
       shippingRules = config.shipping_rules      
     } else {
@@ -213,12 +221,13 @@ exports.post = ({ appSdk, admin }, req, res) => {
         // parse final shipping rules object to shipping services array
         for (const serviceCode in shippingRulesByCode) {
           const rule = shippingRulesByCode[serviceCode]
-
-          console.log('-------xxxxx--------')
-          console.log(rule)
-          console.log('-------zzzzz--------')
+          
+          // console.log('-------xxxxx--------')
+          // console.log(rule)
+          // console.log('-------zzzzz--------')
           if (rule) {
-            let { label } = rule
+            let { label, scheduledDeliveryConfig } = rule
+
             // delete filter properties from rule object
             delete rule.service_code
             delete rule.zip_range
@@ -239,38 +248,86 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (!label) {
               label = serviceCode
             }
+            
+            let day_config
+            
+            for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
+              day_config = JSON.parse(scheduledDeliveryConfig[i])
 
-            response.shipping_services.push({
-              // label, service_code, carrier (and maybe more) from service object
-              ...service,
-              service_code: serviceCode,
-              label,
-              shipping_line: {
-                from: {
-                  ...rule.from,
-                  ...params.from,
-                  zip: originZip
-                },
-                to: params.to,
-                price: 0,
-                total_price: 0,
-                // price, total_price (and maybe more) from rule object
-                ...rule,
-                delivery_time: {
-                  days: 20,
-                  working_days: true,
-                  ...rule.delivery_time
-                },
-                delivery_rules:{
-                  ...rule.delivery_rules
-                },
-                posting_deadline: {
-                  days: 0,
-                  ...config.posting_deadline,
-                  ...rule.posting_deadline
-                }
+              if(day_config.week_day == currentDay){
+                let {open_at, close_at, interval} = day_config
+                
+
+                let time1 = open_at.split(':');
+                let time2 = close_at.split(':');
+                let hour, minute, vagas;
+
+                hour = (parseInt(time2[0])-parseInt(time1[0])) * 60;
+                minute = parseInt(time1[1])+parseInt(time2[1]);
+                vagas = (hour + minute) / interval               
+
+                let current_hour = parseInt(open_at.split(':')[0])
+                let current_minute = parseInt(open_at.split(':')[1])
+
+                for (let ordem = 1; ordem <= vagas; ordem++) {
+                  let scheduled_date_time = scheduleDate.split('/')[2] + '-' + scheduleDate.split('/')[1] + '-' + scheduleDate.split('/')[0] + ' ' + current_hour + ':' + current_minute
+                  
+                  let scheduled_delivery = {
+
+                  }
+
+                  response.shipping_services.push({
+                    // label, service_code, carrier (and maybe more) from service object
+                    ...service,
+                    service_code: serviceCode,
+                    label,
+                    shipping_line: {
+                      from: {
+                        ...rule.from,
+                        ...params.from,
+                        zip: originZip
+                      },
+                      to: params.to,
+                      price: 0,
+                      total_price: 0,
+                      // price, total_price (and maybe more) from rule object
+                      ...rule,
+                      delivery_time: {
+                        days: 20,
+                        working_days: true,
+                        ...rule.delivery_time
+                      },
+                      delivery_rules:{
+                        ...rule.delivery_rules
+                      },
+                      posting_deadline: {
+                        days: 0,
+                        ...config.posting_deadline,
+                        ...rule.posting_deadline
+                      },
+                      scheduled_delivery:{
+                        "^start|end$" : scheduled_date_time
+                      }
+                    }
+                  })
+
+                  current_minute += interval
+                    
+                  if(current_minute >= 60){
+                      let h = (current_minute / 60) << 0
+                      current_hour +=  h
+                      current_minute -= 60 * h
+                  }
+                  
+                  
+                  
+                alert('interval '+vagas);
+
+
               }
-            })
+            }
+            
+            
           }
         }
       }
