@@ -272,10 +272,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 for (let ordem = 1; ordem <= vagas; ordem++) {
                   let scheduled_date_time = scheduleDate.split('/')[2] + '-' + scheduleDate.split('/')[1] + '-' + scheduleDate.split('/')[0] + ' ' + current_hour + ':' + current_minute
                   
-                  let scheduled_delivery = {
-
-                  }
-
                   response.shipping_services.push({
                     // label, service_code, carrier (and maybe more) from service object
                     ...service,
@@ -318,16 +314,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
                       current_hour +=  h
                       current_minute -= 60 * h
                   }
-                  
-                  
-                  
-                alert('interval '+vagas);
-
-
+                }
               }
             }
-            
-            
           }
         }
       }
