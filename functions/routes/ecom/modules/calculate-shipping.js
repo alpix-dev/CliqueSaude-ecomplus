@@ -249,77 +249,110 @@ exports.post = ({ appSdk, admin }, req, res) => {
               label = serviceCode
             }
             
-            let day_config
-            
-            for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
-              console.log(scheduledDeliveryConfig[i])
-              day_config = JSON.parse(scheduledDeliveryConfig[i])
-              console.log('currentDay - ' + currentDay)
-              console.log('day_config - ' + day_config.week_day )
-              if(parseInt(day_config.week_day) == parseInt(currentDay)){
-                let {open_at, close_at, interval} = day_config
-                
-
-                let time1 = open_at.split(':');
-                let time2 = close_at.split(':');
-                let hour, minute, vagas;
-
-                hour = (parseInt(time2[0])-parseInt(time1[0])) * 60;
-                minute = parseInt(time1[1])+parseInt(time2[1]);
-                vagas = (hour + minute) / interval               
-
-                let current_hour = parseInt(open_at.split(':')[0])
-                let current_minute = parseInt(open_at.split(':')[1])
-
-                for (let ordem = 1; ordem <= vagas; ordem++) {
-                  let scheduled_date_time = scheduleDate.split('/')[2] + '-' + scheduleDate.split('/')[1] + '-' + scheduleDate.split('/')[0] + ' ' + current_hour + ':' + current_minute
-                  
-                  response.shipping_services.push({
-                    // label, service_code, carrier (and maybe more) from service object
-                    ...service,
-                    service_code: serviceCode,
-                    label,
-                    shipping_line: {
-                      from: {
-                        ...rule.from,
-                        ...params.from,
-                        zip: originZip
-                      },
-                      to: params.to,
-                      price: 0,
-                      total_price: 0,
-                      // price, total_price (and maybe more) from rule object
-                      ...rule,
-                      delivery_time: {
-                        days: 20,
-                        working_days: true,
-                        ...rule.delivery_time
-                      },
-                      delivery_rules:{
-                        ...rule.delivery_rules
-                      },
-                      posting_deadline: {
-                        days: 0,
-                        ...config.posting_deadline,
-                        ...rule.posting_deadline
-                      },
-                      scheduled_delivery:{
-                        "^start|end$" : scheduled_date_time
-                      }
-                    }
-                  })
-
-                  current_minute += interval
-                    
-                  if(current_minute >= 60){
-                      let h = (current_minute / 60) << 0
-                      current_hour +=  h
-                      current_minute -= 60 * h
-                  }
+            response.shipping_services.push({
+              // label, service_code, carrier (and maybe more) from service object
+              ...service,
+              service_code: serviceCode,
+              label,
+              shipping_line: {
+                from: {
+                  ...rule.from,
+                  ...params.from,
+                  zip: originZip
+                },
+                to: params.to,
+                price: 0,
+                total_price: 0,
+                // price, total_price (and maybe more) from rule object
+                ...rule,
+                delivery_time: {
+                  days: 20,
+                  working_days: true,
+                  ...rule.delivery_time
+                },
+                delivery_rules:{
+                  ...rule.delivery_rules
+                },
+                posting_deadline: {
+                  days: 0,
+                  ...config.posting_deadline,
+                  ...rule.posting_deadline
                 }
               }
-            }
-          }
+            })
+
+          //   let day_config
+            
+            
+          //   for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
+          //     console.log(scheduledDeliveryConfig[i])
+          //     day_config = JSON.parse(scheduledDeliveryConfig[i])
+          //     console.log('currentDay - ' + currentDay)
+          //     console.log('day_config - ' + day_config.week_day )
+          //     if(parseInt(day_config.week_day) == parseInt(currentDay)){
+          //       let {open_at, close_at, interval} = day_config
+                
+
+          //       let time1 = open_at.split(':');
+          //       let time2 = close_at.split(':');
+          //       let hour, minute, vagas;
+
+          //       hour = (parseInt(time2[0])-parseInt(time1[0])) * 60;
+          //       minute = parseInt(time1[1])+parseInt(time2[1]);
+          //       vagas = (hour + minute) / interval               
+
+          //       let current_hour = parseInt(open_at.split(':')[0])
+          //       let current_minute = parseInt(open_at.split(':')[1])
+
+          //       for (let ordem = 1; ordem <= vagas; ordem++) {
+          //         let scheduled_date_time = scheduleDate.split('/')[2] + '-' + scheduleDate.split('/')[1] + '-' + scheduleDate.split('/')[0] + ' ' + current_hour + ':' + current_minute
+                  
+          //         // response.shipping_services.push({
+          //         //   // label, service_code, carrier (and maybe more) from service object
+          //         //   ...service,
+          //         //   service_code: serviceCode,
+          //         //   label,
+          //         //   shipping_line: {
+          //         //     from: {
+          //         //       ...rule.from,
+          //         //       ...params.from,
+          //         //       zip: originZip
+          //         //     },
+          //         //     to: params.to,
+          //         //     price: 0,
+          //         //     total_price: 0,
+          //         //     // price, total_price (and maybe more) from rule object
+          //         //     ...rule,
+          //         //     delivery_time: {
+          //         //       days: 20,
+          //         //       working_days: true,
+          //         //       ...rule.delivery_time
+          //         //     },
+          //         //     delivery_rules:{
+          //         //       ...rule.delivery_rules
+          //         //     },
+          //         //     posting_deadline: {
+          //         //       days: 0,
+          //         //       ...config.posting_deadline,
+          //         //       ...rule.posting_deadline
+          //         //     },
+          //         //     scheduled_delivery:{
+          //         //       "^start|end$" : scheduled_date_time
+          //         //     }
+          //         //   }
+          //         // })
+
+          //         current_minute += interval
+                    
+          //         if(current_minute >= 60){
+          //             let h = (current_minute / 60) << 0
+          //             current_hour +=  h
+          //             current_minute -= 60 * h
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
         }
       }
     }
