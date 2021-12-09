@@ -280,7 +280,8 @@ exports.post = ({ appSdk, admin }, req, res) => {
                 }
               }
             })
-
+          }
+        }
           //   let day_config
             
             
@@ -353,7 +354,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
           //     }
           //   }
           // }
-        }
+        //}
       }
     }
     
