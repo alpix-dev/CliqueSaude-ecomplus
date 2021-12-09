@@ -254,8 +254,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
             for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
               console.log(scheduledDeliveryConfig[i])
               day_config = JSON.parse(scheduledDeliveryConfig[i])
-
-              if(day_config.week_day == currentDay){
+              console.log('currentDay - ' + currentDay)
+              console.log('day_config - ' + day_config.week_day )
+              if(parseInt(day_config.week_day) == parseInt(currentDay)){
                 let {open_at, close_at, interval} = day_config
                 
 
