@@ -1,11 +1,13 @@
 exports.post = ({ appSdk, admin }, req, res) => {  
+  
   const { storeId } = req
   const { application } = req.body
   let { params } = req.body
-  // console.log('-------'+ storeId +'-------')
-  // console.log('-----a-------')
-  // console.log(params)
-  // console.log('-----b-------')
+  
+  console.log('-------'+ storeId +'-------')
+  console.log('-----a-------')
+  console.log(JSON.stringify(params))
+  console.log('-----b-------')
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
     
@@ -13,6 +15,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
     let scheduleList
     let minifyScheduleDate
     let currentDay
+    let scheduleDateOrder
 
     if(params.service_code.includes('|')){
       scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
@@ -22,23 +25,52 @@ exports.post = ({ appSdk, admin }, req, res) => {
       delete params['service_code']
     }
 
-    // console.log('-----c-------')
-    // console.log(params)
-    // console.log('-----d-------')
+    scheduleDateOrder = scheduleDate
+
+    console.log('scheduleDateOrder: ' + scheduleDateOrder)
+    scheduleDate = scheduleDate.includes(':') ? scheduleDate.split(' ')[0] : scheduleDate
+
+    
 
     
     if(scheduleDate != null){
-      const currentDayFormat = new Date(scheduleDate.split('/')[1] + '/' + scheduleDate.split('/')[0] + '/' + scheduleDate.split('/')[2])
+      let separator = scheduleDate.includes('-') ? '-' : '/'
+      console.log('scheduleDate: ' + scheduleDate)
+      console.log('separator: ' + separator)
+      let currentDayFormat
+      // if(separator == "-"){
+      //   currentDayFormat =  new Date(scheduleDate)
+      // }else{
+      //   currentDayFormat =  new Date(scheduleDate.split(separator)[1] + '/' + scheduleDate.split(separator)[0] + '/' + scheduleDate.split(separator)[2])
+      // }
+      if(separator == "-"){
+        currentDayFormat =  scheduleDate.split(separator)[1] + '/' + scheduleDate.split(separator)[2] + '/' + scheduleDate.split(separator)[0]
+      }else{
+        currentDayFormat =  scheduleDate.split(separator)[1] + '/' + scheduleDate.split(separator)[0] + '/' + scheduleDate.split(separator)[2]
+      }      
+      console.log('currentDayFormat: ' + currentDayFormat)
+      
+      minifyScheduleDate = currentDayFormat.replace('/','').replace('/','')
+      
+      currentDayFormat = new Date(currentDayFormat)
+      console.log('currentDayFormat: ' + currentDayFormat)
+
       currentDay = currentDayFormat.getDay()
-      minifyScheduleDate = scheduleDate.replace('/','')
-      admin.firestore().doc(`${storeId}_${minifyScheduleDate}/`).get()
-        .then(function(result){
-          scheduleList = result.data()
-        })
-        .catch(err => {
+      console.log('currentDay: ' + currentDay)
+      
+      console.log('minifyScheduleDate: ' + minifyScheduleDate)
+      console.log('firebase doc: ' + `${storeId}_${minifyScheduleDate}_${params.service_code}/`)
+      admin.firestore().doc(`${storeId}_${minifyScheduleDate}/${params.service_code}`).get().then((docSnapshot) => {
+        if(docSnapshot.exists){
+          scheduleList = result.data(docSnapshot)
+        }else{
           scheduleList = null
-        })
-    }else{
+        }
+      })        
+      .catch(err => {
+        console.log(err)
+      })
+    }else if(!params.is_checkout_confirmation){
       res.send(response)
     }
 
@@ -222,9 +254,6 @@ exports.post = ({ appSdk, admin }, req, res) => {
         for (const serviceCode in shippingRulesByCode) {
           const rule = shippingRulesByCode[serviceCode]
           
-          // console.log('-------xxxxx--------')
-          // console.log(rule)
-          // console.log('-------zzzzz--------')
           if (rule) {
             let { label, scheduledDeliveryConfig } = rule
 
@@ -248,8 +277,47 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (!label) {
               label = serviceCode
             }
-            
-            response.shipping_services.push({
+
+            let oObj_custom_fields = []
+            for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
+              day_config = JSON.parse(scheduledDeliveryConfig[i])
+              oObj_custom_fields.push({field: i, value:JSON.stringify(day_config)})
+            }
+
+
+            // console.log({
+            //   // label, service_code, carrier (and maybe more) from service object
+            //   ...service,
+            //   service_code: serviceCode,
+            //   label,
+            //   shipping_line: {
+            //     from: {
+            //       ...rule.from,
+            //       ...params.from,
+            //       zip: originZip
+            //     },
+            //     to: params.to,
+            //     price: 0,
+            //     total_price: 0,
+            //     // price, total_price (and maybe more) from rule object
+            //     ...rule,
+            //     delivery_time: {
+            //       days: 20,
+            //       working_days: true,
+            //       ...rule.delivery_time
+            //     },
+            //     delivery_rules:{
+            //       ...rule.delivery_rules
+            //     },
+            //     posting_deadline: {
+            //       days: 0,
+            //       ...config.posting_deadline,
+            //       ...rule.posting_deadline
+            //     },
+            //     custom_fields: oObj_custom_fields
+            //   }
+            // })
+            let ship_rule = {
               // label, service_code, carrier (and maybe more) from service object
               ...service,
               service_code: serviceCode,
@@ -277,9 +345,40 @@ exports.post = ({ appSdk, admin }, req, res) => {
                   days: 0,
                   ...config.posting_deadline,
                   ...rule.posting_deadline
-                }
+                },
+                custom_fields:oObj_custom_fields
               }
-            })
+            }
+            if(params.is_checkout_confirmation){
+              ship_rule.service_code= ship_rule.service_code + '|ScheduleDate:' + scheduleDateOrder,
+              ship_rule.shipping_line.scheduled_delivery = {
+                end : new Date(scheduleDate).toISOString()
+              }
+              let scheduleTime = scheduleDateOrder.split(' ')[1]
+              const scheduleConfirm = admin.firestore().doc(`${storeId}_${minifyScheduleDate}/${params.service_code}`)
+
+              scheduleConfirm.get()
+              .then(function(result){
+                const reg = result.data()
+                if(!reg.schedules){
+                  scheduleConfirm.set({
+                    schedules: [scheduleTime]
+                  })
+                }else{
+                  let updateSchedules = reg.schedules
+                  updateSchedules.push(scheduleTime)
+                  scheduleConfirm.set({
+                    schedules:updateSchedules
+                  })
+                  
+                }
+                response.shipping_services.push(ship_rule)
+              }).catch(function(err){
+                console.log(err)
+              })            
+            }else{
+              response.shipping_services.push(ship_rule)
+            }            
           }
         }
           //   let day_config
@@ -294,16 +393,16 @@ exports.post = ({ appSdk, admin }, req, res) => {
           //       let {open_at, close_at, interval} = day_config
                 
 
-          //       let time1 = open_at.split(':');
-          //       let time2 = close_at.split(':');
-          //       let hour, minute, vagas;
+                // let time1 = open_at.split(':');
+                // let time2 = close_at.split(':');
+                // let hour, minute, vagas;
 
-          //       hour = (parseInt(time2[0])-parseInt(time1[0])) * 60;
-          //       minute = parseInt(time1[1])+parseInt(time2[1]);
-          //       vagas = (hour + minute) / interval               
+                // hour = (parseInt(time2[0])-parseInt(time1[0])) * 60;
+                // minute = parseInt(time1[1])+parseInt(time2[1]);
+                // vagas = (hour + minute) / interval               
 
-          //       let current_hour = parseInt(open_at.split(':')[0])
-          //       let current_minute = parseInt(open_at.split(':')[1])
+                // let current_hour = parseInt(open_at.split(':')[0])
+                // let current_minute = parseInt(open_at.split(':')[1])
 
           //       for (let ordem = 1; ordem <= vagas; ordem++) {
           //         let scheduled_date_time = scheduleDate.split('/')[2] + '-' + scheduleDate.split('/')[1] + '-' + scheduleDate.split('/')[0] + ' ' + current_hour + ':' + current_minute
@@ -337,9 +436,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
           //         //       ...config.posting_deadline,
           //         //       ...rule.posting_deadline
           //         //     },
-          //         //     scheduled_delivery:{
-          //         //       "^start|end$" : scheduled_date_time
-          //         //     }
+                  //     scheduled_delivery:{
+                  //       "^start|end$" : scheduled_date_time
+                  //     }
           //         //   }
           //         // })
 
