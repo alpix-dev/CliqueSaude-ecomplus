@@ -207,7 +207,34 @@ const app = {
             type: "boolean",
             default: true,
             title: "Após aprovação do pagamento"
-          }
+          },
+          holidays: {
+            title: "Feriados do Ano",
+            description: 'Exemplo: << 25/12/2021 >>',
+            type: "array",
+            items: {
+              type: 'string',
+              title: 'Data do Feriado'                                
+            }              
+          },
+          closed_dates: {
+            title: "Sem expediente",
+            description: 'Exemplo: << 25/12/2021 >> - Na data informada o agendamento será bloqueado',
+            type: "array",
+            items: {
+              type: 'string',
+              title: 'Data sem expediente'                                
+            }              
+          },
+          no_schedule: {
+            title: "Serviços sem agendamento",
+            description: 'Informe o "Código de serviço" da modalidade que não necessita de agendamento',
+            type: "array",
+            items: {
+              type: 'string',
+              title: 'Código do serviço'                                
+            }              
+          }           
         }
       },
       hide: true
@@ -331,7 +358,7 @@ const app = {
             },
             scheduledDeliveryConfig: {
               title: "Regras de Agendamento",
-              description: "{week_day:1,open_at:'07:00',close_at:'18:00',interval:30}",
+              description: 'Exemplo << {"week_day":0,"open_at":"07:00","close_at":"18:00","interval":30} >> (Weekday -> 0 = Segunda / 1 = Terça... / 6 = Domingo / 7 = Feriado)',
               type: "array",
               items: {
                 type: 'string',

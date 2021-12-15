@@ -5,9 +5,9 @@ exports.post = ({ appSdk, admin }, req, res) => {
   let { params } = req.body
   
   console.log('-------'+ storeId +'-------')
-  console.log('-----a-------')
+  console.log('------------')
   console.log(JSON.stringify(params))
-  console.log('-----b-------')
+  console.log('------------')
     // app configured options
     const config = Object.assign({}, application.data, application.hidden_data)
     
@@ -17,26 +17,30 @@ exports.post = ({ appSdk, admin }, req, res) => {
     let currentDay
     let scheduleDateOrder
 
-    if(params.service_code.includes('|')){
-      scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
-      params.service_code = params.service_code.split('|')[0]
-    }else{
-      scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.replace('ScheduleDate:','') : null
-      delete params['service_code']
+    if(params.service_code){
+      if(params.service_code.includes('|')){
+        scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.split('|')[1].replace('ScheduleDate:','') : null
+        params.service_code = params.service_code.split('|')[0]
+      }else{
+        scheduleDate =  params.service_code.includes('ScheduleDate:') ? params.service_code.replace('ScheduleDate:','') : null
+        delete params['service_code']
+      }
+
+      scheduleDateOrder = scheduleDate
+
+      //console.log('scheduleDateOrder: ' + scheduleDateOrder)
+      scheduleDate = scheduleDate.includes(':') ? scheduleDate.split(' ')[0] : scheduleDate
     }
 
-    scheduleDateOrder = scheduleDate
+    const response = {
+      shipping_services: []
+    }
 
-    console.log('scheduleDateOrder: ' + scheduleDateOrder)
-    scheduleDate = scheduleDate.includes(':') ? scheduleDate.split(' ')[0] : scheduleDate
-
-    
-
-    
+    console.log('scheduleDate - ' + scheduleDate)
     if(scheduleDate != null){
       let separator = scheduleDate.includes('-') ? '-' : '/'
-      console.log('scheduleDate: ' + scheduleDate)
-      console.log('separator: ' + separator)
+      //console.log('scheduleDate: ' + scheduleDate)
+      //console.log('separator: ' + separator)
       let currentDayFormat
       // if(separator == "-"){
       //   currentDayFormat =  new Date(scheduleDate)
@@ -48,37 +52,39 @@ exports.post = ({ appSdk, admin }, req, res) => {
       }else{
         currentDayFormat =  scheduleDate.split(separator)[1] + '/' + scheduleDate.split(separator)[0] + '/' + scheduleDate.split(separator)[2]
       }      
-      console.log('currentDayFormat: ' + currentDayFormat)
+      //console.log('currentDayFormat: ' + currentDayFormat)
       
       minifyScheduleDate = currentDayFormat.replace('/','').replace('/','')
       
       currentDayFormat = new Date(currentDayFormat)
-      console.log('currentDayFormat: ' + currentDayFormat)
+      //console.log('currentDayFormat: ' + currentDayFormat)
 
       currentDay = currentDayFormat.getDay()
-      console.log('currentDay: ' + currentDay)
+      //console.log('currentDay: ' + currentDay)
       
-      console.log('minifyScheduleDate: ' + minifyScheduleDate)
-      console.log('firebase doc: ' + `${storeId}_${minifyScheduleDate}_${params.service_code}/`)
-      admin.firestore().doc(`${storeId}_${minifyScheduleDate}/${params.service_code}`).get().then((docSnapshot) => {
+      console.log(`${storeId}/${minifyScheduleDate}_${params.service_code}`)
+      admin.firestore().doc(`${storeId}/${minifyScheduleDate}_${params.service_code}`).get().then((docSnapshot) => {
+        //console.log('1 -- ')
         if(docSnapshot.exists){
-          scheduleList = result.data(docSnapshot)
+          //console.log('1 -- a')
+          scheduleList = docSnapshot.get('schedules')
         }else{
+          //console.log('1 -- b')
           scheduleList = null
         }
       })        
       .catch(err => {
+        //console.log('1 -- c')
         console.log(err)
       })
     }else if(!params.is_checkout_confirmation){
+      //console.log('1 -- d')
       res.send(response)
     }
 
     // start mounting response body
     // https://apx-mods.e-com.plus/api/v1/calculate_shipping/response_schema.json?store_id=100
-    const response = {
-      shipping_services: []
-    }
+    
     let shippingRules
     
     
@@ -277,46 +283,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
             if (!label) {
               label = serviceCode
             }
-
+            console.log('scheduledDeliveryConfig')
+            console.log(scheduledDeliveryConfig)
             let oObj_custom_fields = []
             for (let i = 0; i < scheduledDeliveryConfig.length; i++) {
               day_config = JSON.parse(scheduledDeliveryConfig[i])
               oObj_custom_fields.push({field: i, value:JSON.stringify(day_config)})
             }
 
-
-            // console.log({
-            //   // label, service_code, carrier (and maybe more) from service object
-            //   ...service,
-            //   service_code: serviceCode,
-            //   label,
-            //   shipping_line: {
-            //     from: {
-            //       ...rule.from,
-            //       ...params.from,
-            //       zip: originZip
-            //     },
-            //     to: params.to,
-            //     price: 0,
-            //     total_price: 0,
-            //     // price, total_price (and maybe more) from rule object
-            //     ...rule,
-            //     delivery_time: {
-            //       days: 20,
-            //       working_days: true,
-            //       ...rule.delivery_time
-            //     },
-            //     delivery_rules:{
-            //       ...rule.delivery_rules
-            //     },
-            //     posting_deadline: {
-            //       days: 0,
-            //       ...config.posting_deadline,
-            //       ...rule.posting_deadline
-            //     },
-            //     custom_fields: oObj_custom_fields
-            //   }
-            // })
             let ship_rule = {
               // label, service_code, carrier (and maybe more) from service object
               ...service,
@@ -354,29 +328,50 @@ exports.post = ({ appSdk, admin }, req, res) => {
               ship_rule.shipping_line.scheduled_delivery = {
                 end : new Date(scheduleDate).toISOString()
               }
-              let scheduleTime = scheduleDateOrder.split(' ')[1]
-              const scheduleConfirm = admin.firestore().doc(`${storeId}_${minifyScheduleDate}/${params.service_code}`)
-
-              scheduleConfirm.get()
-              .then(function(result){
-                const reg = result.data()
-                if(!reg.schedules){
-                  scheduleConfirm.set({
-                    schedules: [scheduleTime]
-                  })
+              
+              let order_scheduleTime = scheduleDateOrder.split(' ')[1]
+              let order_name = params.to.name
+              let order_serviceCode = params.service_code
+              console.log(`${storeId}/${minifyScheduleDate}_${params.service_code}`)
+              const scheduleConfirm = admin.firestore().doc(`${storeId}/${minifyScheduleDate}_${params.service_code}`)
+              scheduleConfirm.get().then((docSnapshot) => {
+                console.log(order_scheduleTime + ' -- ' + order_name + ' -- ' + order_serviceCode)
+                if(docSnapshot.exists){                  
+                  const reg = docSnapshot.data()
+                  if(!reg.schedules){
+                    console.log('save a')
+                    scheduleConfirm.set({
+                      schedules: [{time: order_scheduleTime, name: order_name, service_code: order_serviceCode}]
+                    })
+                    response.shipping_services.push(ship_rule)
+                  }else{
+                    console.log('save b')
+                    let updateSchedules = reg.schedules
+                    let query = updateSchedules.filter(el => el.time == order_scheduleTime)
+                    if(query.length == 0){
+                      console.log('save c')
+                      updateSchedules.push({time: order_scheduleTime, name: order_name, service_code: order_serviceCode})
+                      scheduleConfirm.set({
+                        schedules:updateSchedules
+                      })
+                      console.log('ship_rule - ' + ship_rule)
+                      response.shipping_services.push(ship_rule)
+                    }
+                  }
                 }else{
-                  let updateSchedules = reg.schedules
-                  updateSchedules.push(scheduleTime)
-                  scheduleConfirm.set({
-                    schedules:updateSchedules
-                  })
                   
+                  scheduleConfirm.set({
+                    schedules: [{time: order_scheduleTime, name: order_name, service_code: order_serviceCode}]
+                  })
+                  response.shipping_services.push(ship_rule)
                 }
-                response.shipping_services.push(ship_rule)
-              }).catch(function(err){
+              })        
+              .catch(err => {
+                console.log('save d')
                 console.log(err)
-              })            
+              })             
             }else{
+              console.log('save e')
               response.shipping_services.push(ship_rule)
             }            
           }
